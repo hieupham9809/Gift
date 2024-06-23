@@ -75,18 +75,29 @@
             return params;
         }
 
+        // Function to extract video ID from YouTube URL
+        function getYouTubeVideoId(url) {
+            const urlObj = new URL(url);
+            return urlObj.searchParams.get("v");
+        }
+
         // Function to embed the YouTube video
         function onYouTubeIframeAPIReady() {
             const params = getQueryParams();
-            if (params.videoId) {
-                player = new YT.Player('video-container', {
-                    height: '315',
-                    width: '560',
-                    videoId: params.videoId,
-                    events: {
-                        'onReady': onPlayerReady
-                    }
-                });
+            if (params.videoUrl) {
+                const videoId = getYouTubeVideoId(params.videoUrl);
+                if (videoId) {
+                    player = new YT.Player('video-container', {
+                        height: '315',
+                        width: '560',
+                        videoId: videoId,
+                        events: {
+                            'onReady': onPlayerReady
+                        }
+                    });
+                } else {
+                    document.getElementById('video-container').innerHTML = '<p>Invalid YouTube URL.</p>';
+                }
             } else {
                 document.getElementById('video-container').innerHTML = '<p>Nothing but you are amazing!</p>';
             }
