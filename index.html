@@ -38,6 +38,16 @@
             font-size: 24px;
             margin-top: 10px;
         }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .controls button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -50,6 +60,11 @@
             <img src="https://supership.vn/wp-content/uploads/2019/02/gift-box-icon-1.png" alt="Gift Box" id="gift-box">
             <p class="amazing-text" id="amazing-text">You are amazing!</p>
             <p id="click-text">Click the gift box to get a surprise!</p>
+            <div class="controls" id="controls" style="display: none;">
+                <button id="prev">Previous</button>
+                <button id="play-pause">Play/Pause</button>
+                <button id="next">Next</button>
+            </div>
         </div>
     </div>
 
@@ -62,6 +77,9 @@
 
         // Create a YouTube player variable
         var player;
+        var videoUrls = [];
+        var currentVideoIndex = 0;
+        var isPlaying = false;
 
         // Function to get URL parameters
         function getQueryParams() {
@@ -81,25 +99,41 @@
             return urlObj.searchParams.get("v");
         }
 
+        // Function to shuffle an array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         // Function to embed the YouTube video
         function onYouTubeIframeAPIReady() {
             const params = getQueryParams();
-            if (params.videoUrl) {
-                const videoId = getYouTubeVideoId(params.videoUrl);
-                if (videoId) {
-                    player = new YT.Player('video-container', {
-                        height: '315',
-                        width: '560',
-                        videoId: videoId,
-                        events: {
-                            'onReady': onPlayerReady
-                        }
-                    });
-                } else {
-                    document.getElementById('video-container').innerHTML = '<p>Invalid YouTube URL.</p>';
-                }
+            if (params.videoUrls) {
+                videoUrls = params.videoUrls.split(',').map(url => url.trim());
+                videoUrls = shuffle(videoUrls);
+                loadVideo(currentVideoIndex);
             } else {
                 document.getElementById('video-container').innerHTML = '<p>Nothing but you are amazing!</p>';
+            }
+        }
+
+        // Function to load a video by index
+        function loadVideo(index) {
+            const videoId = getYouTubeVideoId(videoUrls[index]);
+            if (player) {
+                player.loadVideoById(videoId);
+            } else {
+                player = new YT.Player('video-container', {
+                    height: '315',
+                    width: '560',
+                    videoId: videoId,
+                    events: {
+                        'onReady': onPlayerReady
+                    }
+                });
             }
         }
 
@@ -108,11 +142,39 @@
             const giftBox = document.getElementById('gift-box');
             const amazingText = document.getElementById('amazing-text');
             const clickText = document.getElementById('click-text');
+            const controls = document.getElementById('controls');
+            const playPauseButton = document.getElementById('play-pause');
+            const nextButton = document.getElementById('next');
+            const prevButton = document.getElementById('prev');
+
             giftBox.addEventListener('click', function() {
                 player.playVideo();
+                isPlaying = true;
                 giftBox.style.display = 'none';
                 clickText.style.display = 'none';
                 amazingText.style.display = 'block';
+                controls.style.display = 'flex';
+            });
+
+            playPauseButton.addEventListener('click', function() {
+                if (isPlaying) {
+                    player.pauseVideo();
+                    playPauseButton.textContent = 'Play';
+                } else {
+                    player.playVideo();
+                    playPauseButton.textContent = 'Pause';
+                }
+                isPlaying = !isPlaying;
+            });
+
+            nextButton.addEventListener('click', function() {
+                currentVideoIndex = (currentVideoIndex + 1) % videoUrls.length;
+                loadVideo(currentVideoIndex);
+            });
+
+            prevButton.addEventListener('click', function() {
+                currentVideoIndex = (currentVideoIndex - 1 + videoUrls.length) % videoUrls.length;
+                loadVideo(currentVideoIndex);
             });
         }
     </script>
