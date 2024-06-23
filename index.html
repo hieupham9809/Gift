@@ -17,15 +17,26 @@
             width: 100%;
             height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             background: rgba(0, 0, 0, 0.5);
             color: white;
             font-size: 20px;
-            pointer-events: none; /* Make the overlay non-interactive */
+            pointer-events: auto; /* Make the overlay interactive */
         }
-        .video-overlay button {
-            pointer-events: auto; /* Make the button interactive */
+        .video-overlay img {
+            width: 100px;
+            height: 100px;
+            border: none;
+            cursor: pointer;
+            pointer-events: auto; /* Make the image interactive */
+        }
+        .amazing-text {
+            display: none; /* Initially hidden */
+            color: yellow; /* Custom color for the text */
+            font-size: 24px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -35,12 +46,23 @@
         <div id="video-container">
             <!-- The video iframe will be inserted here by JavaScript -->
         </div>
-        <div class="video-overlay">
-            <button onclick="alert('Button Clicked!')">Click Me!</button>
+        <div class="video-overlay" id="video-overlay">
+            <img src="https://supership.vn/wp-content/uploads/2019/02/gift-box-icon-1.png" alt="Gift Box" id="gift-box">
+            <p class="amazing-text" id="amazing-text">You are amazing!</p>
+            <p id="click-text">Click the gift box to get a surprise!</p>
         </div>
     </div>
 
     <script>
+        // Load the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Create a YouTube player variable
+        var player;
+
         // Function to get URL parameters
         function getQueryParams() {
             const params = {};
@@ -54,19 +76,33 @@
         }
 
         // Function to embed the YouTube video
-        function embedYouTubeVideo(videoId) {
-            const container = document.getElementById('video-container');
-            container.innerHTML = `
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-            `;
+        function onYouTubeIframeAPIReady() {
+            const params = getQueryParams();
+            if (params.videoId) {
+                player = new YT.Player('video-container', {
+                    height: '315',
+                    width: '560',
+                    videoId: params.videoId,
+                    events: {
+                        'onReady': onPlayerReady
+                    }
+                });
+            } else {
+                document.getElementById('video-container').innerHTML = '<p>Nothing but you are amazing!</p>';
+            }
         }
 
-        // Get the video ID from the URL parameters and embed the video
-        const params = getQueryParams();
-        if (params.videoId) {
-            embedYouTubeVideo(params.videoId);
-        } else {
-            document.getElementById('video-container').innerHTML = '<p>Nothing but you are amazing!</p>';
+        // Function to handle player ready event
+        function onPlayerReady(event) {
+            const giftBox = document.getElementById('gift-box');
+            const amazingText = document.getElementById('amazing-text');
+            const clickText = document.getElementById('click-text');
+            giftBox.addEventListener('click', function() {
+                player.playVideo();
+                giftBox.style.display = 'none';
+                clickText.style.display = 'none';
+                amazingText.style.display = 'block';
+            });
         }
     </script>
 </body>
